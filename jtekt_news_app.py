@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 import time
 
-st.title("JTEKT ニュース抽出アプリ Ver1.5.4 本文抽出完全版")
+st.title("JTEKT ニュース抽出アプリ Ver1.5.4.1 本文整形版")
 
 # ユーザー入力
 start_date = st.date_input("開始日を選択", value=datetime(2024, 1, 1))
@@ -69,8 +69,22 @@ def fetch_news(start_date, end_date):
                         detail_res = requests.get(link)
                         detail_soup = BeautifulSoup(detail_res.content, "html.parser")
                         detail_content = detail_soup.select_one("div.detail-content")
-                        content = detail_content.get_text(separator="\n", strip=True) if detail_content else ""
-                        time.sleep(0.5)  # サーバー負荷対策で少し間隔を空ける
+
+                        # 改良：本文整形処理
+                        body_texts = []
+                        found_main = False
+
+                        for elem in detail_content.find_all(['h2', 'p']):
+                            text = elem.get_text(strip=True)
+                            if not found_main and elem.name == 'h2':
+                                found_main = True  # 本文スタート判定
+                            if found_main:
+                                if text:  # 空白行は除去
+                                    body_texts.append(text)
+
+                        content = '\n'.join(body_texts)
+                        time.sleep(0.5)  # サーバー負荷対策
+
                     except Exception as e:
                         content = f"本文取得失敗: {e}"
 
