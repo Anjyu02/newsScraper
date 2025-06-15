@@ -3,8 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 from datetime import datetime
+import time
 
-st.title("JTEKT ニュース抽出アプリ Ver1.5.3 完全安定版")
+st.title("JTEKT ニュース抽出アプリ Ver1.5.4 本文抽出完全版")
 
 # ユーザー入力
 start_date = st.date_input("開始日を選択", value=datetime(2024, 1, 1))
@@ -61,9 +62,22 @@ def fetch_news(start_date, end_date):
                 link = ""
 
             if start_date <= date_obj <= end_date:
+                # 本文取得（リンク先にアクセス）
+                content = ""
+                if link:
+                    try:
+                        detail_res = requests.get(link)
+                        detail_soup = BeautifulSoup(detail_res.content, "html.parser")
+                        detail_content = detail_soup.select_one("div.detail-content")
+                        content = detail_content.get_text(separator="\n", strip=True) if detail_content else ""
+                        time.sleep(0.5)  # サーバー負荷対策で少し間隔を空ける
+                    except Exception as e:
+                        content = f"本文取得失敗: {e}"
+
                 news_data.append({
                     "日付": date_obj,
                     "タイトル": title,
+                    "本文": content,
                     "リンク": link
                 })
             elif date_obj < start_date:
