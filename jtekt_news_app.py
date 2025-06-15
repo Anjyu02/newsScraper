@@ -60,4 +60,4 @@ def fetch_news(start_date, end_date):
             else:
                 link = ""
 
-            if start_date <= date_obj <= end
+            if start_date <= date_obj <= end_date:
