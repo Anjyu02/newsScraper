@@ -1,93 +1,71 @@
 import streamlit as st
-import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-import time
-import re
+import pandas as pd
+from datetime import datetime
 
-# 段落整形関数
-def extract_clean_text(content_div):
-    paragraphs = []
-    for p in content_div.find_all(['p', 'h1', 'h2', 'h3']):
-        for br in p.find_all("br"):
-            br.replace_with("\n")
-        text = p.get_text().strip()
-        if text:
-            paragraphs.append(text)
-    result = "\n".join(paragraphs)
-    result = re.sub(r'[ 　]+', ' ', result)
-    result = re.sub(r'\n{3,}', '\n\n', result)
-    return result.strip()
+st.title("JTEKT ニュースリリース抽出アプリ Ver1.5.1完全安定版")
 
-# ニュース収集関数（Ver1.5 ページネーション＋期間打ち切り型）
+start_date = st.date_input("開始日を選択", value=datetime(2024, 1, 1))
+end_date = st.date_input("終了日を選択", value=datetime(2025, 12, 31))
+
+if start_date > end_date:
+    st.error("開始日は終了日以前の日付を選択してください。")
+    st.stop()
+
+@st.cache_data
 def fetch_news(start_date, end_date):
-    base_url = 'https://www.jtekt.co.jp/news/?page='
+    base_url = "https://www.jtekt.co.jp/news/index.html"
+    news_data = []
     page = 1
-    news_list = []
-    
-    while True:
-        response = requests.get(base_url + str(page))
-        soup = BeautifulSoup(response.text, 'html.parser')
-        articles = soup.select('li.article')
-        
-        if not articles:
-            break  # 記事がない場合は終了
-        
-        for item in articles:
-            date_str = item.select_one('time.article-op-data')['datetime']
-            date = pd.to_datetime(date_str)
-            
-            if date < start_date:
-                return pd.DataFrame(news_list, columns=['企業名','日付','カテゴリ','タイトル','URL','本文'])
-            
-            if start_date <= date <= end_date:
-                title = item.select_one('p.article-txt').text.strip()
-                category = item.select_one('p.article-op-cate').text.strip()
-                link = item.select_one('a')['href']
-                full_link = link if link.startswith('http') else 'https://www.jtekt.co.jp' + link
+    max_pages = 30  # 最大ページ数制限（JTEKTは多くても20前後）
 
-                try:
-                    detail_response = requests.get(full_link)
-                    detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
-                    content_div = detail_soup.select_one('div.detail-content')
-                    body_text = extract_clean_text(content_div) if content_div else "本文なし"
-                except Exception as e:
-                    body_text = f"本文取得失敗: {e}"
+    while page <= max_pages:
+        url = base_url if page == 1 else f"{base_url}?page={page}"
+        response = requests.get(url)
+        if response.status_code != 200:
+            break
 
-                news_list.append(['JTEKT', date.strftime('%Y-%m-%d'), category, title, full_link, body_text])
-                time.sleep(0.5)
-        
+        soup = BeautifulSoup(response.content, "html.parser")
+        news_list = soup.select(".newsList li")
+
+        if not news_list:
+            break
+
+        stop_flag = False  # 新たに追加
+
+        for news in news_list:
+            date_text = news.select_one(".date").text.strip()
+            title = news.select_one(".title").text.strip()
+            link = news.find("a").get("href")
+            full_link = f"https://www.jtekt.co.jp{link}"
+
+            date_obj = datetime.strptime(date_text, "%Y年%m月%d日").date()
+
+            if start_date <= date_obj <= end_date:
+                news_data.append({
+                    "日付": date_obj,
+                    "タイトル": title,
+                    "リンク": full_link
+                })
+            elif date_obj < start_date:
+                stop_flag = True
+                break  # forループ抜ける
+
+        if stop_flag:
+            break
+
         page += 1
 
-    return pd.DataFrame(news_list, columns=['企業名','日付','カテゴリ','タイトル','URL','本文'])
+    return pd.DataFrame(news_data)
 
-
-# Streamlit アプリ本体
-
-st.title("JTEKT ニュース自動収集ツール Ver1.5")
-
-st.write("""
-期間指定に基づいてJTEKT公式ニュースリリースを全ページ自動巡回して収集します。
-期間外に入った時点で自動停止する高効率版です。
-""")
-
-# 期間選択UI
-start_date_input = st.date_input("抽出開始日", pd.to_datetime('2023-01-01'))
-end_date_input = st.date_input("抽出終了日", pd.to_datetime('2025-06-16'))
-
-# pandas型に変換（重要！！）
-start_date = pd.to_datetime(start_date_input)
-end_date = pd.to_datetime(end_date_input)
-
-# 実行ボタン
-if st.button("ニュース収集実行"):
-    with st.spinner("ニュースを収集中…（少々お待ちください）"):
-        result_df = fetch_news(start_date, end_date)
-        st.success(f"✅ ニュース抽出完了：{len(result_df)}件")
-
+if st.button("抽出開始"):
+    result_df = fetch_news(start_date, end_date)
+    if result_df.empty:
+        st.write("該当期間のニュースはありませんでした。")
+    else:
+        st.write(f"{len(result_df)}件のニュースを抽出しました。")
         st.dataframe(result_df)
 
-        csv = result_df.to_csv(index=False).encode('utf-8')
-        st.download_button("CSVダウンロード", csv, f"jtekt_news_{start_date}_{end_date}.csv", "text/csv")
-
-st.caption("対象: https://www.jtekt.co.jp/news/")
+        csv = result_df.to_csv(index=False, encoding='utf-8-sig')
+        st.download_button("CSVダウンロード", csv, file_name="jtekt_news.csv", mime="text/csv")
