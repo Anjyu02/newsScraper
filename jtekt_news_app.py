@@ -61,3 +61,13 @@ def fetch_news(start_date, end_date):
                 link = ""
 
             if start_date <= date_obj <= end_date:
+    news_data.append({
+        "日付": date_obj,
+        "タイトル": title,
+        "リンク": link
+    })
+elif date_obj < start_date:
+    stop_flag = True
+    break
+
+                
