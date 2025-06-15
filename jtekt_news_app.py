@@ -56,7 +56,6 @@ def fetch_news(start_date, end_date):
 
     return pd.DataFrame(news_list, columns=['企業名','日付','カテゴリ','タイトル','URL','本文'])
 
-
 # --- Streamlit アプリ本体 ---
 
 st.title("JTEKT ニュース自動収集ツール (クラウド版)")
@@ -69,3 +68,16 @@ Streamlit Cloud対応版です。
 # 期間選択UI
 start_date = st.date_input("抽出開始日", pd.to_datetime('2023-01-01'))
 end_date = st.date_input("抽出終了日", pd.to_datetime('2025-06-15'))
+
+# 実行ボタン（これが重要！）
+if st.button("ニュース収集実行"):
+    with st.spinner("ニュースを収集中です…（少々お待ちください）"):
+        result_df = fetch_news(start_date, end_date)
+        st.success(f"✅ ニュース抽出完了：{len(result_df)}件")
+
+        st.dataframe(result_df)
+
+        csv = result_df.to_csv(index=False).encode('utf-8')
+        st.download_button("CSVダウンロード", csv, f"jtekt_news_{start_date}_{end_date}.csv", "text/csv")
+
+st.caption("対象: https://www.jtekt.co.jp/news/")
