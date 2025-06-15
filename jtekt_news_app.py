@@ -72,8 +72,12 @@ st.write("""
 """)
 
 # 期間選択UI
-start_date = st.date_input("抽出開始日", pd.to_datetime('2023-01-01'))
-end_date = st.date_input("抽出終了日", pd.to_datetime('2025-06-16'))
+start_date_input = st.date_input("抽出開始日", pd.to_datetime('2023-01-01'))
+end_date_input = st.date_input("抽出終了日", pd.to_datetime('2025-06-16'))
+
+# pandas型に変換（重要！！）
+start_date = pd.to_datetime(start_date_input)
+end_date = pd.to_datetime(end_date_input)
 
 # 実行ボタン
 if st.button("ニュース収集実行"):
