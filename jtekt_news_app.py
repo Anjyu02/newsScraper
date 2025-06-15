@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 import time
 
-st.title("JTEKT ニュース抽出アプリ Ver1.5.4.1 本文整形版")
+st.title("Espresso Machine Ver1.5.4.1")
 
 # ユーザー入力
 start_date = st.date_input("開始日を選択", value=datetime(2024, 1, 1))
