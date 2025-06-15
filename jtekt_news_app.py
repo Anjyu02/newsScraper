@@ -51,7 +51,7 @@ def fetch_news(start_date, end_date):
             elif date_obj < start_date:
                 stop_flag = True
                 break  # forループ抜ける
-
+        st.write(f"{page}ページまで巡回しました")
         if stop_flag:
             break
 
