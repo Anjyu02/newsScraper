@@ -68,4 +68,4 @@ Streamlit Cloud対応版です。
 
 # 期間選択UI
 start_date = st.date_input("抽出開始日", pd.to_datetime('2023-01-01'))
-end_date = st.date_input("抽出終了日", pd.to_datetime('20_
+end_date = st.date_input("抽出終了日", pd.to_datetime('2025-06-15'))
