@@ -8,7 +8,7 @@ import time
 st.title("Espresso Machine Ver1.5.4.1")
 
 # ユーザー入力
-start_date = st.date_input("開始日を選択", value=datetime(2024, 1, 1))
+start_date = st.date_input("開始日を選択", value=date(2024, 1, 1))
 end_date = st.date_input("終了日を選択", value=date.today())  # ← 今日の日付をセット
 
 if start_date > end_date:
