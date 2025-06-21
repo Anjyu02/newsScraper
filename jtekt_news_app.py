@@ -9,7 +9,7 @@ st.title("Espresso Machine Ver1.5.4.1")
 
 # ユーザー入力
 start_date = st.date_input("開始日を選択", value=date(2024, 1, 1))
-end_date = st.date_input("終了日を選択", value=date.today())  # ← 今日の日付をセット
+end_date = st.date_input("終了日を選択", value=date.today())  # 今日をデフォルトに設定
 
 if start_date > end_date:
     st.error("開始日は終了日以前の日付を選択してください。")
@@ -44,53 +44,53 @@ def fetch_news(start_date, end_date):
             if not time_tag:
                 continue
 
-            # 日付をdatetime型に変換
             date_text = time_tag.get("datetime").strip()
             date_obj = datetime.strptime(date_text, "%Y-%m-%d").date()
 
-            # タイトル
             title_tag = article.select_one("p.article-txt")
             title = title_tag.get_text(strip=True) if title_tag else ""
 
-            # URL
             link_tag = article.find("a")
+            link = ""
             if link_tag and link_tag.get("href"):
                 link = link_tag.get("href")
                 if not link.startswith("http"):
                     link = "https://www.jtekt.co.jp" + link
-            else:
-                link = ""
 
             if start_date <= date_obj <= end_date:
-                # 本文取得（リンク先にアクセス）
                 content = ""
                 if link:
                     try:
                         detail_res = requests.get(link)
                         detail_soup = BeautifulSoup(detail_res.content, "html.parser")
-                        detail_content = detail_soup.select_one("div.detail-content")
 
-                       # 本文整形処理（h2・pタグのテキスト＋PDFリンクを抽出）
-body_texts = []
+                        detail_content = (
+                            detail_soup.select_one("div.detail-content")
+                            or detail_soup.select_one("div.news-detail")
+                            or detail_soup.select_one("div.base-width")
+                            or detail_soup.select_one("main")
+                        )
 
-# h2やpタグの本文を抽出（見出し＋本文）
-for elem in detail_content.find_all(['h2', 'p']):
-    text = elem.get_text(strip=True)
-    if text:
-        body_texts.append(text)
+                        body_texts = []
+                        if detail_content:
+                            for elem in detail_content.find_all(['h2', 'p']):
+                                text = elem.get_text(strip=True)
+                                if text:
+                                    body_texts.append(text)
 
-# PDFリンクだけ抽出（画像リンクは除外）
-pdf_links = detail_content.find_all("a", href=lambda x: x and x.endswith(".pdf"))
-for a in pdf_links:
-    href = a.get("href")
-    if href and not href.startswith("http"):
-        href = "https://www.jtekt.co.jp" + href  # 相対パス補完
-    body_texts.append(f"[PDFリンク] {href}")
+                            # PDFリンク抽出
+                            pdf_links = detail_content.find_all("a", href=lambda x: x and x.endswith(".pdf"))
+                            for a in pdf_links:
+                                href = a.get("href")
+                                if href and not href.startswith("http"):
+                                    href = "https://www.jtekt.co.jp" + href
+                                body_texts.append(f"[PDFリンク] {href}")
 
-# 最終的な本文
-content = '\n'.join(body_texts)
+                            content = '\n'.join(body_texts)
+                        else:
+                            content = "本文の構造を特定できませんでした。"
 
-                        time.sleep(0.5)  # サーバー負荷対策
+                        time.sleep(0.5)
 
                     except Exception as e:
                         content = f"本文取得失敗: {e}"
