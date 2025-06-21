@@ -70,19 +70,26 @@ def fetch_news(start_date, end_date):
                         detail_soup = BeautifulSoup(detail_res.content, "html.parser")
                         detail_content = detail_soup.select_one("div.detail-content")
 
-                        # 改良：本文整形処理
-                        body_texts = []
-                        found_main = False
+                       # 本文整形処理（h2・pタグのテキスト＋PDFリンクを抽出）
+body_texts = []
 
-                        for elem in detail_content.find_all(['h2', 'p']):
-                            text = elem.get_text(strip=True)
-                            if not found_main and elem.name == 'h2':
-                                found_main = True  # 本文スタート判定
-                            if found_main:
-                                if text:  # 空白行は除去
-                                    body_texts.append(text)
+# h2やpタグの本文を抽出（見出し＋本文）
+for elem in detail_content.find_all(['h2', 'p']):
+    text = elem.get_text(strip=True)
+    if text:
+        body_texts.append(text)
 
-                        content = '\n'.join(body_texts)
+# PDFリンクだけ抽出（画像リンクは除外）
+pdf_links = detail_content.find_all("a", href=lambda x: x and x.endswith(".pdf"))
+for a in pdf_links:
+    href = a.get("href")
+    if href and not href.startswith("http"):
+        href = "https://www.jtekt.co.jp" + href  # 相対パス補完
+    body_texts.append(f"[PDFリンク] {href}")
+
+# 最終的な本文
+content = '\n'.join(body_texts)
+
                         time.sleep(0.5)  # サーバー負荷対策
 
                     except Exception as e:
