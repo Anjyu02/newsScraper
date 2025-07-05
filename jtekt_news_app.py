@@ -51,7 +51,7 @@ def get_page_url(year, page_num):
     else:
         return f"https://www.jtekt.co.jp/news/news{year}_{page_num}.html"
 
-def scrape_articles(year, end_date):
+def scrape_articles(year, start_date, end_date):
     driver = generate_driver()
     data = []
     page_num = 1
@@ -82,6 +82,7 @@ def scrape_articles(year, end_date):
                 date_obj = pd.to_datetime(date, format="%Y.%m.%d", errors="coerce")
 
                 # ✅ 処理中日付を1行で上書き表示
+                date_obj = pd.to_datetime(date, format="%Y.%m.%d", errors="coerce")
                 status.write(f"📄 ページ{page_num} | 📅 処理中の日付: {date}")
 
                 # ✅ 終了日より古い記事に達したら中断
@@ -154,7 +155,7 @@ if start_date > end_date:
 else:
     if st.button("✅ ニュースを抽出する"):
         with st.spinner("記事を抽出中です..."):
-            df = scrape_articles(start_date.year, pd.to_datetime(end_date))
+            df = scrape_articles(start_date.year, pd.to_datetime(start_date), pd.to_datetime(end_date))
             if df.empty:
                 st.warning("記事が見つかりませんでした。")
             else:
