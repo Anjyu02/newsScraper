@@ -56,7 +56,7 @@ def scrape_articles(year, start_date, end_date):
     driver = generate_driver()
     data = []
     page_num = 1
-    status = st.empty()  # ✅ 上書き用表示エリア
+    status = st.empty()  # 上書き用ステータス表示
 
     while True:
         url = get_page_url(year, page_num)
@@ -83,13 +83,17 @@ def scrape_articles(year, start_date, end_date):
                 # ✅ ステータス更新
                 status.write(f"📄 ページ{page_num} | 📅 処理中の日付: {date}")
 
-                # ✅ フィルタ：終了日より過去 → 終了
+                # ✅ 新しすぎる記事はスキップ
+                if date_obj > pd.to_datetime(end_date):
+                    continue
+
+                # ✅ 古すぎる記事に達したら終了
                 if date_obj < pd.to_datetime(start_date):
                     print(f"🛑 {date} は開始日 {start_date} より前 → 抽出終了")
                     driver.quit()
                     return pd.DataFrame(data)
 
-                # ✅ フィルタ：スキップ対象URL
+                # ✅ スキップ対象リンクを除外
                 if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
                     data.append({"日付": date, "見出し": title, "本文": "スキップ対象", "リンク": link})
                     continue
