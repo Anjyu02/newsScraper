@@ -57,7 +57,7 @@ def scrape_articles():
     data = []
     articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
 
-    def scrape_articles(year):
+def scrape_articles(year):
     driver = generate_driver()
     driver.get(get_page_url(year, 1))  # ← 年度を渡すように修正
     hide_cookie_popup(driver)
