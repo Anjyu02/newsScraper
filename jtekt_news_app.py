@@ -146,6 +146,8 @@ start_of_year = datetime.date(today.year, 1, 1)
 start_date = st.date_input("開始日", start_of_year)
 end_date = st.date_input("終了日", today)
 
+st.caption("※ JTEKTニュース一覧は新しい順に並んでいるため、開始日は過去の日付にしてください。")
+
 if start_date > end_date:
     st.error("⚠️ 終了日は開始日以降の日付を選択してください。")
 else:
