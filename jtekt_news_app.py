@@ -45,30 +45,6 @@ def hide_cookie_popup(driver):
     except Exception as e:
         print(f"⚠️ 非表示処理に失敗しました: {e}")
 
-def scrape_articles():
-    driver = generate_driver()
-    driver.get(get_page_url(2024, 1))
-    hide_cookie_popup(driver)
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//div//p[@class="article-txt"]'))
-    )
-    time.sleep(2)
-
-    data = []
-    articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
-
-def scrape_articles(year):
-    driver = generate_driver()
-    driver.get(get_page_url(year, 1))  # ← 年度を渡すように修正
-    hide_cookie_popup(driver)
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//div//p[@class="article-txt"]'))
-    )
-    time.sleep(2)
-
-    data = []
-    articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
-
 def scrape_articles(year):
     driver = generate_driver()
     driver.get(get_page_url(year, 1))
