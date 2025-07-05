@@ -80,6 +80,8 @@ def scrape_articles(year):
                 title = article.find_element(By.XPATH, './/p[@class="article-txt"]').text
                 date = article.find_element(By.XPATH, './/time').text
 
+                st.write(f"📅 現在処理中の日付: {date}")
+
                 if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
                     data.append({"日付": date, "見出し": title, "本文": "スキップ対象", "リンク": link})
                     continue
