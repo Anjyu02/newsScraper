@@ -146,6 +146,8 @@ def scrape_articles(year, start_date, end_date):
                 continue
 
         page_num += 1
+    # scrape_articles() の最後に print
+print("📦 収集件数（フィルター前）:", len(data))
 
     driver.quit()
     return pd.DataFrame(data)
