@@ -147,8 +147,8 @@ end_date = st.date_input("どこまで遡るか（終了日）", default_end_dat
 
 st.caption("※ JTEKTニュース一覧は新しい順に並んでいるため、開始日は今日に近い日、終了日は遡りたい過去の日にしてください。")
 
-if start_date > end_date:
-    st.error("⚠️ 終了日は開始日以降の日付を選択してください。")
+if end_date > start_date:
+    st.error("⚠️ 終了日は開始日以前の日付を選択してください。")
 else:
     if st.button("✅ ニュースを抽出する"):
         with st.spinner("記事を抽出中です..."):
