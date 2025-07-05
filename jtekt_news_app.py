@@ -45,61 +45,80 @@ def hide_cookie_popup(driver):
     except Exception as e:
         print(f"⚠️ 非表示処理に失敗しました: {e}")
 
+def get_page_url(year, page_num):
+    if page_num == 1:
+        return f"https://www.jtekt.co.jp/news/news{year}.html"
+    else:
+        return f"https://www.jtekt.co.jp/news/news{year}_{page_num}.html"
+
 def scrape_articles(year):
     driver = generate_driver()
-    driver.get(get_page_url(year, 1))
-    hide_cookie_popup(driver)
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//div//p[@class="article-txt"]'))
-    )
-    time.sleep(2)
-
+    page_num = 1
     data = []
-    articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
 
-    for article in articles:
+    while True:
+        url = get_page_url(year, page_num)
+        driver.get(url)
+
         try:
-            link = article.find_element(By.XPATH, './/a').get_attribute('href')
-            title = article.find_element(By.XPATH, './/p[@class="article-txt"]').text
-            date = article.find_element(By.XPATH, './/time').text
+            hide_cookie_popup(driver)
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, '//li[@class="article"]'))
+            )
+            time.sleep(1)
+        except:
+            print(f"✅ ページ{page_num}が存在しないため終了")
+            break
 
-            if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
-                data.append({"日付": date, "見出し": title, "本文": "スキップ対象", "リンク": link})
+        print(f"📄 ページ{page_num}を処理中...")
+
+        articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
+
+        for article in articles:
+            try:
+                link = article.find_element(By.XPATH, './/a').get_attribute('href')
+                title = article.find_element(By.XPATH, './/p[@class="article-txt"]').text
+                date = article.find_element(By.XPATH, './/time').text
+
+                if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
+                    data.append({"日付": date, "見出し": title, "本文": "スキップ対象", "リンク": link})
+                    continue
+
+                driver.execute_script("window.open('');")
+                driver.switch_to.window(driver.window_handles[1])
+                driver.get(link)
+                WebDriverWait(driver, 10).until(lambda d: d.execute_script('return document.readyState') == 'complete')
+                hide_cookie_popup(driver)
+                WebDriverWait(driver, 10).until(
+                    EC.visibility_of_element_located((By.XPATH, '//div[@class="detail-content"]'))
+                )
+
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                content_div = soup.select_one("div.detail-content")
+                body_text = "\n".join(
+                    tag.get_text(strip=True) for tag in content_div.find_all(["h2", "p"])
+                )
+
+                data.append({
+                    "日付": date,
+                    "見出し": title,
+                    "本文": body_text.strip(),
+                    "リンク": link
+                })
+
+                driver.close()
+                driver.switch_to.window(driver.window_handles[0])
+                time.sleep(1)
+
+            except Exception as e:
+                traceback.print_exc()
+                try:
+                    driver.switch_to.window(driver.window_handles[0])
+                except:
+                    pass
                 continue
 
-            driver.execute_script("window.open('');")
-            driver.switch_to.window(driver.window_handles[1])
-            driver.get(link)
-            WebDriverWait(driver, 10).until(lambda d: d.execute_script('return document.readyState') == 'complete')
-            hide_cookie_popup(driver)
-            WebDriverWait(driver, 10).until(
-                EC.visibility_of_element_located((By.XPATH, '//div[@class="detail-content"]'))
-            )
-
-            soup = BeautifulSoup(driver.page_source, "html.parser")
-            content_div = soup.select_one("div.detail-content")
-            body_text = "\n".join(
-                tag.get_text(strip=True) for tag in content_div.find_all(["h2", "p"])
-            )
-
-            data.append({
-                "日付": date,
-                "見出し": title,
-                "本文": body_text.strip(),
-                "リンク": link
-            })
-
-            driver.close()
-            driver.switch_to.window(driver.window_handles[0])
-            time.sleep(1)
-
-        except Exception as e:
-            traceback.print_exc()
-            try:
-                driver.switch_to.window(driver.window_handles[0])
-            except:
-                pass
-            continue
+        page_num += 1  # ✅ 次のページへ
 
     driver.quit()
     return pd.DataFrame(data)
