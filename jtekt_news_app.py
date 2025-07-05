@@ -169,7 +169,7 @@ else:
         with st.spinner("記事を抽出中です..."):
             df = scrape_articles(start_date.year, start_date, end_date)
             if df.empty:
-            st.warning("記事が見つかりませんでした。")
+                st.warning("記事が見つかりませんでした。")
 else:
     df["日付_dt"] = pd.to_datetime(df["日付"], format="%Y.%m.%d", errors="coerce")
     df_filtered = df[(df["日付_dt"] <= pd.to_datetime(start_date)) &
