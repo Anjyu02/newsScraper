@@ -135,14 +135,10 @@ import datetime
 
 st.title("JTEKTニュース抽出アプリ")
 
-# 年度選択（最新年から2009年まで）
+# カレンダーで日付範囲を選択（初期値：今年の1月〜12月）
 current_year = datetime.datetime.now().year
-year_options = list(range(current_year, 2008, -1))
-target_year = st.selectbox("抽出する年度", options=year_options)
-
-# カレンダーで日付範囲選択（その年度の初日〜末日）
-start_date = st.date_input("開始日", datetime.date(target_year, 1, 1))
-end_date = st.date_input("終了日", datetime.date(target_year, 12, 31))
+start_date = st.date_input("開始日", datetime.date(current_year, 1, 1))
+end_date = st.date_input("終了日", datetime.date(current_year, 12, 31))
 
 # エラーチェック：終了日が開始日より前でないか
 if start_date > end_date:
