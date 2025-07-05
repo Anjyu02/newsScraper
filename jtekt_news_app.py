@@ -74,13 +74,15 @@ def scrape_articles(year):
 
         articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
 
+        status = st.empty()  # ← 1行だけの空の表示エリアを作る
+        
         for article in articles:
             try:
                 link = article.find_element(By.XPATH, './/a').get_attribute('href')
                 title = article.find_element(By.XPATH, './/p[@class="article-txt"]').text
                 date = article.find_element(By.XPATH, './/time').text
 
-                st.write(f"📅 現在処理中の日付: {date}")
+                status.write(f"📅 現在処理中の日付: {date}")
 
                 if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
                     data.append({"日付": date, "見出し": title, "本文": "スキップ対象", "リンク": link})
