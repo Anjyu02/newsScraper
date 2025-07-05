@@ -137,7 +137,7 @@ st.title("JTEKTニュース抽出アプリ")
 
 # カレンダーで日付範囲を選択（初期値：今年の1月〜12月）
 current_year = datetime.datetime.now().year
-start_date = st.date_input("開始日", datetime.date(current_year, 1, 1))
+start_date = st.date_input("開始日", datetime.date.today())
 end_date = st.date_input("終了日", datetime.date(current_year, 12, 31))
 
 # エラーチェック：終了日が開始日より前でないか
