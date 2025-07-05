@@ -63,9 +63,8 @@ def hide_cookie_popup(driver):
     except Exception as e:
         print(f"⚠️ 非表示処理に失敗しました: {e}")
 
-
-
-WebDriverWait(driver, 10).until(
+driver = generate_driver()
+WebDriverWait(driver, 20).until(
     EC.presence_of_element_located((By.XPATH, '//div//p[@class="article-txt"]'))
 )
 time.sleep(3)
