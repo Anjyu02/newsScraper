@@ -157,6 +157,9 @@ start_date = st.date_input("開始日（今日に近い日）", today)
 default_end_date = datetime.date(start_date.year, 1, 1)
 end_date = st.date_input("終了日（どこまで遡るか）", default_end_date)
 
+# 👇★この位置に追加★
+st.write(f"✅ 開始日: {start_date}, 終了日: {end_date}")
+st.write("✅ ボタンチェック開始")
 st.caption("※ JTEKTニュース一覧は新しい順に並んでいるため、開始日は今日に近い日、終了日は遡りたい過去の日にしてください。")
 
 if end_date > start_date:
