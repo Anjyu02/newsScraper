@@ -146,7 +146,7 @@ if start_date > end_date:
 else:
     if st.button("✅ ニュースを抽出する"):
         with st.spinner("記事を抽出中です..."):
-            df = scrape_articles(target_year)  # ← 年度を関数に渡す
+            df = scrape_articles(start_date.year)  # ← 開始日を関数に渡す
             if df.empty:
                 st.warning("記事が見つかりませんでした。")
             else:
