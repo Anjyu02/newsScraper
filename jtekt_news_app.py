@@ -170,19 +170,19 @@ else:
             df = scrape_articles(start_date.year, start_date, end_date)
             if df.empty:
                 st.warning("記事が見つかりませんでした。")
-else:
-    df["日付_dt"] = pd.to_datetime(df["日付"], format="%Y.%m.%d", errors="coerce")
-    df_filtered = df[(df["日付_dt"] <= pd.to_datetime(start_date)) &
+            else:
+                df["日付_dt"] = pd.to_datetime(df["日付"], format="%Y.%m.%d", errors="coerce")
+                df_filtered = df[(df["日付_dt"] <= pd.to_datetime(start_date)) &
                      (df["日付_dt"] >= pd.to_datetime(end_date))]  # ✅ 修正済条件
 
-    if df_filtered.empty:
-        st.warning("指定した期間に該当する記事はありませんでした。")
-    else:
-        st.success(f"{len(df_filtered)}件の記事を抽出しました！")
-        st.dataframe(df_filtered.drop(columns=["日付_dt"]))
-        st.download_button(
-            label="📄 CSVダウンロード",
-            data=df_filtered.drop(columns=["日付_dt"]).to_csv(index=False),
-            file_name=f"jtekt_news_{start_date}_{end_date}.csv",
-            mime="text/csv"
-        )
+            if df_filtered.empty:
+                st.warning("指定した期間に該当する記事はありませんでした。")
+            else:
+                st.success(f"{len(df_filtered)}件の記事を抽出しました！")
+                st.dataframe(df_filtered.drop(columns=["日付_dt"]))
+                st.download_button(
+                    label="📄 CSVダウンロード",
+                    data=df_filtered.drop(columns=["日付_dt"]).to_csv(index=False),
+                    file_name=f"jtekt_news_{start_date}_{end_date}.csv",
+                    mime="text/csv"
+                )
