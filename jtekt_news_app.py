@@ -53,6 +53,7 @@ def get_page_url(year, page_num):
 
 # ✅ ニュース抽出本体
 def scrape_articles(year, start_date, end_date):
+    print("🚀 scrape_articles 開始")
     driver = generate_driver()
     data = []
     page_num = 1
