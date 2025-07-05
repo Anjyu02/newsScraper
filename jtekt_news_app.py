@@ -186,3 +186,6 @@ else:
                         file_name=f"jtekt_news_{start_date}_{end_date}.csv",
                         mime="text/csv"
                     )
+if st.button("✅ テスト実行"):
+    df = scrape_articles(2025, datetime.date(2025, 7, 5), datetime.date(2025, 1, 1))
+    st.write(df)
