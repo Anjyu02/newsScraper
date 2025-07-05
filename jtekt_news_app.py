@@ -53,8 +53,10 @@ def get_page_url(year, page_num):
 
 def scrape_articles(year):
     driver = generate_driver()
-    page_num = 1
     data = []
+    page_num = 1
+
+    status = st.empty()  # ✅ ← ここで1回だけ作っておく（1行表示）
 
     while True:
         url = get_page_url(year, page_num)
@@ -70,19 +72,16 @@ def scrape_articles(year):
             print(f"✅ ページ{page_num}が存在しないため終了")
             break
 
-        print(f"📄 ページ{page_num}を処理中...")
-
         articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
 
-        status = st.empty()  # ← 1行だけの空の表示エリアを作る
-        
         for article in articles:
             try:
                 link = article.find_element(By.XPATH, './/a').get_attribute('href')
                 title = article.find_element(By.XPATH, './/p[@class="article-txt"]').text
                 date = article.find_element(By.XPATH, './/time').text
 
-                status.write(f"📅 現在処理中の日付: {date}")
+                # ✅ ページ番号と日付を1行で上書き表示！
+                status.write(f"📄 ページ{page_num} | 📅 処理中の日付: {date}")
 
                 if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
                     data.append({"日付": date, "見出し": title, "本文": "スキップ対象", "リンク": link})
@@ -122,7 +121,7 @@ def scrape_articles(year):
                     pass
                 continue
 
-        page_num += 1  # ✅ 次のページへ
+        page_num += 1  # ✅ ページ番号を1つ進める
 
     driver.quit()
     return pd.DataFrame(data)
