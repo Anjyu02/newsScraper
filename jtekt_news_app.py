@@ -90,14 +90,14 @@ def scrape_articles(year, start_date, end_date):
                     continue
 
                 # ✅ 日付フィルター（新しい→古い）
-                if date_obj > pd.to_datetime(start_date):
-                    print(f"⏩ {date} は開始日 {start_date} より新しい → スキップ")
-                    continue
+                # if date_obj > pd.to_datetime(start_date):
+                #     print(f"⏩ {date} は開始日 {start_date} より新しい → スキップ")
+                #     continue
 
-                if date_obj < pd.to_datetime(end_date):
-                    print(f"🛑 {date} は終了日 {end_date} より前 → 遡行終了")
-                    driver.quit()
-                    return pd.DataFrame(data)
+                # if date_obj < pd.to_datetime(end_date):
+                #     print(f"🛑 {date} は終了日 {end_date} より前 → 遡行終了")
+                #     driver.quit()
+                #     return pd.DataFrame(data)
 
                 # ✅ スキップ対象のリンク判定
                 if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
