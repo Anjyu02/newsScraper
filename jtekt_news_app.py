@@ -143,7 +143,7 @@ st.title("JTEKTニュース抽出アプリ")
 today = datetime.date.today()
 start_date = st.date_input("開始日（今日に近い日）", today)
 default_end_date = datetime.date(start_date.year, 1, 1)
-end_date = st.date_input("どこまで遡るか（終了日）", default_end_date)
+end_date = st.date_input("終了日（どこまで遡るか）", default_end_date)
 
 st.caption("※ JTEKTニュース一覧は新しい順に並んでいるため、開始日は今日に近い日、終了日は遡りたい過去の日にしてください。")
 
