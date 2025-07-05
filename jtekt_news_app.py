@@ -51,12 +51,12 @@ def get_page_url(year, page_num):
     else:
         return f"https://www.jtekt.co.jp/news/news{year}_{page_num}.html"
 
-def scrape_articles(year):
+def scrape_articles(year, end_date):
     driver = generate_driver()
     data = []
     page_num = 1
 
-    status = st.empty()  # ✅ ← ここで1回だけ作っておく（1行表示）
+    status = st.empty()  # ✅ ← 表示用エリア（1行だけ上書き）
 
     while True:
         url = get_page_url(year, page_num)
@@ -79,9 +79,16 @@ def scrape_articles(year):
                 link = article.find_element(By.XPATH, './/a').get_attribute('href')
                 title = article.find_element(By.XPATH, './/p[@class="article-txt"]').text
                 date = article.find_element(By.XPATH, './/time').text
+                date_obj = pd.to_datetime(date, format="%Y.%m.%d", errors="coerce")
 
-                # ✅ ページ番号と日付を1行で上書き表示！
+                # ✅ 処理中日付を1行で上書き表示
                 status.write(f"📄 ページ{page_num} | 📅 処理中の日付: {date}")
+
+                # ✅ 終了日より古い記事に達したら中断
+                if date_obj < pd.to_datetime(end_date):
+                    print(f"🛑 {date} は終了日 {end_date} より前 → 抽出終了")
+                    driver.quit()
+                    return pd.DataFrame(data)
 
                 if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
                     data.append({"日付": date, "見出し": title, "本文": "スキップ対象", "リンク": link})
@@ -121,7 +128,7 @@ def scrape_articles(year):
                     pass
                 continue
 
-        page_num += 1  # ✅ ページ番号を1つ進める
+        page_num += 1
 
     driver.quit()
     return pd.DataFrame(data)
