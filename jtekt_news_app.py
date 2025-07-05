@@ -90,14 +90,14 @@ def scrape_articles(year, start_date, end_date):
                     continue
 
                 # ✅ 日付フィルター（新しい→古い）
-                # if date_obj > pd.to_datetime(start_date):
-                #     print(f"⏩ {date} は開始日 {start_date} より新しい → スキップ")
-                #     continue
+                if date_obj > pd.to_datetime(start_date):
+                    print(f"⏩ {date} は開始日 {start_date} より新しい → スキップ")
+                    continue
 
-                # if date_obj < pd.to_datetime(end_date):
-                #     print(f"🛑 {date} は終了日 {end_date} より前 → 遡行終了")
-                #     driver.quit()
-                #     return pd.DataFrame(data)
+                if date_obj < pd.to_datetime(end_date):
+                    print(f"🛑 {date} は終了日 {end_date} より前 → 遡行終了")
+                    driver.quit()
+                    return pd.DataFrame(data)
 
                 # ✅ スキップ対象のリンク判定
                 if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
@@ -171,9 +171,10 @@ else:
             if df.empty:
                 st.warning("記事が見つかりませんでした。")
             else:
-                df["日付_dt"] = pd.to_datetime(df["日付"], format="%Y.%m.%d", errors="coerce")
-                df_filtered = df[(df["日付_dt"] >= pd.to_datetime(start_date)) &
-                                 (df["日付_dt"] <= pd.to_datetime(end_date))]
+               df["日付_dt"] = pd.to_datetime(df["日付"], format="%Y.%m.%d", errors="coerce")
+               df_filtered = df[(df["日付_dt"] <= pd.to_datetime(start_date)) &
+               (df["日付_dt"] >= pd.to_datetime(end_date))]
+
                 if df_filtered.empty:
                     st.warning("指定した期間に該当する記事はありませんでした。")
                 else:
