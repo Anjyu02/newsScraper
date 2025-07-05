@@ -69,6 +69,18 @@ def scrape_articles():
     data = []
     articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
 
+    def scrape_articles(year):
+    driver = generate_driver()
+    driver.get(get_page_url(year, 1))
+    hide_cookie_popup(driver)
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, '//div//p[@class="article-txt"]'))
+    )
+    time.sleep(2)
+
+    data = []
+    articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
+
     for article in articles:
         try:
             link = article.find_element(By.XPATH, './/a').get_attribute('href')
@@ -84,13 +96,22 @@ def scrape_articles():
             driver.get(link)
             WebDriverWait(driver, 10).until(lambda d: d.execute_script('return document.readyState') == 'complete')
             hide_cookie_popup(driver)
-            WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, '//div[@class="detail-content"]')))
+            WebDriverWait(driver, 10).until(
+                EC.visibility_of_element_located((By.XPATH, '//div[@class="detail-content"]'))
+            )
 
             soup = BeautifulSoup(driver.page_source, "html.parser")
             content_div = soup.select_one("div.detail-content")
-            body_text = "\n".join(tag.get_text(strip=True) for tag in content_div.find_all(["h2", "p"]))
+            body_text = "\n".join(
+                tag.get_text(strip=True) for tag in content_div.find_all(["h2", "p"])
+            )
 
-            data.append({"日付": date, "見出し": title, "本文": body_text.strip(), "リンク": link})
+            data.append({
+                "日付": date,
+                "見出し": title,
+                "本文": body_text.strip(),
+                "リンク": link
+            })
 
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
