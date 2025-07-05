@@ -45,12 +45,6 @@ def hide_cookie_popup(driver):
     except Exception as e:
         print(f"⚠️ 非表示処理に失敗しました: {e}")
 
-def get_page_url(year, page_num):
-    if page_num == 1:
-        return f"https://www.jtekt.co.jp/news/news{year}.html"
-    else:
-        return f"https://www.jtekt.co.jp/news/news{year}_{page_num}.html"
-
 # ✅ ニュース抽出本体
 def scrape_articles(year, start_date, end_date):
     print("🚀 scrape_articles 開始")
