@@ -57,6 +57,18 @@ def scrape_articles():
     data = []
     articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
 
+    def scrape_articles(year):
+    driver = generate_driver()
+    driver.get(get_page_url(year, 1))  # ← 年度を渡すように修正
+    hide_cookie_popup(driver)
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, '//div//p[@class="article-txt"]'))
+    )
+    time.sleep(2)
+
+    data = []
+    articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
+
     for article in articles:
         try:
             link = article.find_element(By.XPATH, './/a').get_attribute('href')
@@ -98,15 +110,47 @@ def scrape_articles():
 # ===============================
 # ✅ Streamlitアプリ本体
 # ===============================
+import datetime
+
 st.title("JTEKTニュース抽出アプリ")
 
-if st.button("実行する"):
-    df = scrape_articles()
-    st.success(f"{len(df)}件を抽出しました")
-    st.dataframe(df)
-    st.download_button(
-        label="📄 CSVダウンロード",
-        data=df.to_csv(index=False),
-        file_name="jtekt_news.csv",
-        mime="text/csv"
-    )
+# 年度選択（最新年から2009年まで）
+current_year = datetime.datetime.now().year
+year_options = list(range(current_year, 2008, -1))
+target_year = st.selectbox("抽出する年度", options=year_options)
+
+# カレンダーで日付範囲選択（その年度の初日〜末日）
+start_date = st.date_input("開始日", datetime.date(target_year, 1, 1))
+end_date = st.date_input("終了日", datetime.date(target_year, 12, 31))
+
+# エラーチェック：終了日が開始日より前でないか
+if start_date > end_date:
+    st.error("⚠️ 終了日は開始日以降の日付を選択してください。")
+else:
+    if st.button("✅ ニュースを抽出する"):
+        with st.spinner("記事を抽出中です..."):
+            df = scrape_articles(target_year)  # ← 年度を関数に渡す
+            if df.empty:
+                st.warning("記事が見つかりませんでした。")
+            else:
+                try:
+                    # "YYYY.MM.DD" を datetime に変換
+                    df["日付_dt"] = pd.to_datetime(df["日付"], format="%Y.%m.%d", errors="coerce")
+
+                    # フィルター：選択した期間内の記事のみ抽出
+                    df_filtered = df[(df["日付_dt"] >= pd.to_datetime(start_date)) &
+                                     (df["日付_dt"] <= pd.to_datetime(end_date))]
+
+                    if df_filtered.empty:
+                        st.warning("指定した期間に該当する記事はありませんでした。")
+                    else:
+                        st.success(f"{len(df_filtered)}件の記事を抽出しました！")
+                        st.dataframe(df_filtered.drop(columns=["日付_dt"]))
+                        st.download_button(
+                            label="📄 CSVダウンロード",
+                            data=df_filtered.drop(columns=["日付_dt"]).to_csv(index=False),
+                            file_name=f"jtekt_news_{start_date}_{end_date}.csv",
+                            mime="text/csv"
+                        )
+                except Exception as e:
+                    st.error(f"日付処理中にエラーが発生しました: {e}")
