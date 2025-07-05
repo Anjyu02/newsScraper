@@ -187,5 +187,5 @@ else:
                         mime="text/csv"
                     )
 if st.button("✅ テスト実行"):
-    df = scrape_articles(2025, datetime.date(2025, 7, 5), datetime.date(2025, 1, 1))
+    df = scrape_articles(2024, start_date, end_date)
     st.write(df)
