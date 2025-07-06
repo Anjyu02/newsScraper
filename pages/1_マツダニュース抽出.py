@@ -14,9 +14,10 @@ else:
     if st.button("✅ ニュースを抽出する"):
         with st.spinner("記事を抽出中です..."):
 
-            years = list(range(end_date.year, start_date.year + 1))
-            all_data = []
+            # ✅ 年を「新しい順」に並べる
+            years = list(range(end_date.year, start_date.year + 1))[::-1]
 
+            all_data = []
             status_placeholder = st.empty()  # ← 1行だけの進捗表示
 
             for year in years:
@@ -29,7 +30,7 @@ else:
                 df_all = pd.concat(all_data, ignore_index=True)
                 df_all["日付_dt"] = pd.to_datetime(df_all["日付"], errors="coerce")
 
-                # ✅ 期間フィルター
+                # ✅ 期間フィルター（昇順に誤解されやすいが、start_date > end_date）
                 df_filtered = df_all[
                     (df_all["日付_dt"] >= pd.to_datetime(end_date)) &
                     (df_all["日付_dt"] <= pd.to_datetime(start_date))
