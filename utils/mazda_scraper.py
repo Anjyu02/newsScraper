@@ -9,6 +9,8 @@ import time
 
 # ✅ end_date を追加し、進捗用の progress_callback も保持
 def scrape_mazda_news(year, end_date, progress_callback=None):
+    end_date = pd.to_datetime(end_date)
+    
     def generate_driver():
         options = Options()
         options.add_argument("--headless")
@@ -47,7 +49,7 @@ def scrape_mazda_news(year, end_date, progress_callback=None):
             print(f"⚠️ 日付処理中に例外発生 → {e}")
             continue
 
-        # ✅ 比較して終了日より古ければ打ち切り
+        #終了日を過ぎたらストップ
         if date_obj < end_date:
             print(f"🛑 {date} は終了日 {end_date.date()} より古いため打ち切り")
             break
