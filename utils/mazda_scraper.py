@@ -1,37 +1,13 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-import time
+import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 
-# ✅ WebDriver（PCサイズ表示）
-def generate_driver():
-    options = webdriver.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920x1080')
-    return webdriver.Chrome(options=options)
-
-# ✅ マツダニュース抽出関数
+# ✅ マツダニュース抽出関数（Seleniumなし版）
 def scrape_mazda_news(year):
     base_url = f"https://www.mazda.co.jp/news_list/{year}/"
-    driver = generate_driver()
-    driver.get(base_url)
-
-    # ✅ 全ての月（アコーディオン）を展開
-    accordions = driver.find_elements(By.CSS_SELECTOR, "dl.Accordion")
-    for accordion in accordions:
-        classes = accordion.get_attribute("class")
-        if "open" not in classes:
-            try:
-                accordion.find_element(By.CSS_SELECTOR, "dt > a").click()
-                time.sleep(0.5)  # ⏳ アニメーション or DOM変化待ち
-            except:
-                print("⚠️ アコーディオン展開に失敗しました")
-
-    # ✅ ページソースを取得してパース
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    driver.quit()
+    res = requests.get(base_url, timeout=10)
+    res.raise_for_status()
+    soup = BeautifulSoup(res.text, "html.parser")
 
     # ✅ 記事データ抽出
     articles = soup.select("div.Notification__list__box2")
@@ -45,10 +21,44 @@ def scrape_mazda_news(year):
             title_tag = link_tag.select_one("p.Notification__list__text-pc")
             date = date_tag.text.strip() if date_tag else ""
             title = title_tag.text.strip() if title_tag else ""
+
+            # ✅ 本文ページにアクセスして、本文を取得
+            body = scrape_article_body(url)
+
             news_data.append({
                 "日付": date,
                 "見出し": title,
+                "本文": body,
                 "リンク": url
             })
 
-    return news_data
+    return pd.DataFrame(news_data)
+
+# ✅ 本文抽出関数
+def scrape_article_body(url):
+    try:
+        res = requests.get(url, timeout=10)
+        res.raise_for_status()
+        soup = BeautifulSoup(res.text, "html.parser")
+
+        # ✅ h2, h4, p, strong, table のテキストを順に抽出
+        content_div = soup.select_one("div.OneColumnLayout__column")
+        if not content_div:
+            return ""
+
+        elements = content_div.select("h2, h4, p, strong, table")
+        texts = []
+
+        for elem in elements:
+            if elem.name == "table":
+                texts.append(elem.get_text(strip=True, separator=" "))
+            else:
+                text = elem.get_text(strip=True)
+                if text:
+                    texts.append(text)
+
+        return "\n".join(texts)
+
+    except Exception as e:
+        print(f"⚠️ 本文抽出失敗: {url} → {e}")
+        return ""
