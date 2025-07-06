@@ -1,77 +1,44 @@
-def scrape_articles_mazda(year, start_date, end_date):
-    print(f"🚗 scrape_articles_mazda 開始: {year}年（{start_date.date()}〜{end_date.date()}）")
-    driver = generate_driver()
-    data = []
+import streamlit as st
+import pandas as pd
+from datetime import datetime
+from utils.mazda_scraper import scrape_articles_mazda
 
-    url = f"https://www.mazda.co.jp/news_list/{year}/"
-    print(f"🌐 アクセスURL: {url}")
-    driver.get(url)
-    time.sleep(2)
+st.title("🚗 マツダニュース抽出アプリ")
 
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    box = soup.find("div", class_="Notification__list__box2")
+# ✅ 入力：日付（新しい → 古い）
+start_date = st.date_input("開始日（新しい日）", datetime.today())
+end_date = st.date_input("終了日（古い日）", datetime.today())
 
-    if not box:
-        print("⚠️ ニュース一覧が見つかりません")
-        return pd.DataFrame()
+st.caption("※ マツダ公式ニュースは年別に分かれており、ページネーションは存在しません。")
 
-    dls = box.find_all("dl")
-    for dl in dls:
-        try:
-            date = dl.find("dt").get_text(strip=True)
-            date_obj = pd.to_datetime(date, format="%Y年%m月%d日", errors="coerce")
-            if pd.isna(date_obj):
-                continue
+if start_date < end_date:
+    st.error("⚠️ 終了日は開始日より過去の日付を選んでください。")
+else:
+    if st.button("✅ ニュースを抽出する"):
+        with st.spinner("記事を抽出中です..."):
 
-            # ✅ 範囲外スキップ処理（JTEKT同様、新しい順と仮定）
-            if date_obj < end_date:
-                print(f"🛑 {date} は範囲より古いため打ち切り")
-                break
-            elif date_obj > start_date:
-                print(f"⏩ {date} は範囲より新しいためスキップ")
-                continue
+            years = list(range(end_date.year, start_date.year + 1))
+            all_data = []
 
-            link_tag = dl.find("dd").find("a")
-            title = link_tag.get_text(strip=True)
-            href = link_tag["href"]
-            full_link = f"https://www.mazda.co.jp{href}"
+            for year in years:
+                st.write(f"📅 {year}年を処理中...")
+                df = scrape_articles_mazda(year, pd.to_datetime(start_date), pd.to_datetime(end_date))
+                if not df.empty:
+                    all_data.append(df)
 
-            # ✅ 本文取得（新しいタブ）
-            driver.execute_script("window.open('');")
-            driver.switch_to.window(driver.window_handles[1])
-            driver.get(full_link)
+            if all_data:
+                df_all = pd.concat(all_data, ignore_index=True)
+                df_all["日付_dt"] = pd.to_datetime(df_all["日付"], errors="coerce")
+                df_all = df_all.sort_values("日付_dt", ascending=False).drop(columns=["日付_dt"])
 
-            WebDriverWait(driver, 10).until(
-                EC.visibility_of_element_located((By.CLASS_NAME, "detail-content"))
-            )
-            detail_soup = BeautifulSoup(driver.page_source, "html.parser")
-            content_div = detail_soup.select_one("div.detail-content")
+                st.success(f"✅ {len(df_all)}件の記事を抽出しました！")
+                st.dataframe(df_all)
 
-            if content_div:
-                body_text = extract_content_text(content_div)
+                st.download_button(
+                    label="📄 CSVダウンロード",
+                    data=df_all.to_csv(index=False),
+                    file_name="mazda_news.csv",
+                    mime="text/csv"
+                )
             else:
-                body_text = "本文抽出不可"
-
-            data.append({
-                "日付": date,
-                "見出し": title,
-                "本文": body_text.strip(),
-                "リンク": full_link
-            })
-
-            print(f"✅ 抽出成功: {title}")
-            driver.close()
-            driver.switch_to.window(driver.window_handles[0])
-            time.sleep(1)
-
-        except Exception as e:
-            print(f"⚠️ エラー: {e}")
-            traceback.print_exc()
-            try:
-                driver.switch_to.window(driver.window_handles[0])
-            except:
-                pass
-            continue
-
-    driver.quit()
-    return pd.DataFrame(data)
+                st.warning("⚠️ 指定期間に該当する記事は見つかりませんでした。")
