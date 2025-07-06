@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import time
 
-def scrape_mazda_news(year):
+# ✅ progress_callback を引数に追加
+def scrape_mazda_news(year, progress_callback=None):
     def generate_driver():
         options = Options()
         options.add_argument("--headless")
@@ -31,14 +32,15 @@ def scrape_mazda_news(year):
         if not link_tag:
             continue
 
-        if progress_callback:
-        progress_callback(f"📰 {date} - {title}")
-
         url = "https://www.mazda.co.jp" + link_tag["href"]
         date_tag = link_tag.select_one("p.Notification__list__date")
         title_tag = link_tag.select_one("p.Notification__list__text-pc")
         date = date_tag.text.strip() if date_tag else ""
         title = title_tag.text.strip() if title_tag else ""
+
+        # ✅ 進捗表示（Streamlitの st.text などを渡す）
+        if progress_callback:
+            progress_callback(f"📰 {date} - {title}")
 
         try:
             driver = generate_driver()
