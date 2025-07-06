@@ -46,6 +46,25 @@ def hide_cookie_popup(driver):
     except Exception as e:
         print(f"⚠️ 非表示処理に失敗しました: {e}")
 
+def get_yearly_date_ranges(start_date, end_date):
+    """
+    任意の期間を年ごとに分割し、
+    JTEKTのニュースページ構造（年別URL）に対応する年単位の日付範囲を返す。
+    """
+    if start_date < end_date:
+        # 新しい日 → 古い日 という順に揃える
+        start_date, end_date = end_date, start_date
+
+    year_ranges = {}
+    for year in range(end_date.year, start_date.year + 1):
+        y_start = min(start_date, pd.to_datetime(f"{year}-12-31"))
+        y_end = max(end_date, pd.to_datetime(f"{year}-01-01"))
+
+        if y_start >= y_end:
+            year_ranges[year] = (y_start, y_end)
+
+    return dict(sorted(year_ranges.items(), reverse=True))
+
 def scrape_articles(year, start_date, end_date):
     print(f"🚀 scrape_articles 開始: {year}年（{start_date.date()}〜{end_date.date()}）")
     driver = generate_driver()
