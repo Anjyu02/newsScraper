@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from utils.mazda_scraper import scrape_articles_mazda
+from utils.mazda_scraper import scrape_mazda_news
+
 
 st.title("🚗 マツダニュース抽出アプリ")
 
