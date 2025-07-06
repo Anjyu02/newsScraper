@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import time
 
-# ✅ end_date を追加し、進捗用の progress_callback も保持
-def scrape_mazda_news(year, end_date, progress_callback=None):
+def scrape_mazda_news(year, start_date, end_date, progress_callback=None):
+    start_date = pd.to_datetime(start_date)
     end_date = pd.to_datetime(end_date)
 
     def generate_driver():
@@ -43,15 +43,19 @@ def scrape_mazda_news(year, end_date, progress_callback=None):
         try:
             date_obj = pd.to_datetime(date, format="%Y.%m.%d", errors="coerce")
             if pd.isna(date_obj):
-                print(f"⏭️ 日付変換失敗のためスキップ → '{date}' / 見出し: {title}")
+                print(f"⏭️ 日付変換失敗 → '{date}' / 見出し: {title}")
                 continue
         except Exception as e:
-            print(f"⚠️ 日付処理中に例外発生 → {e}")
+            print(f"⚠️ 日付変換エラー → {e}")
             continue
 
         if date_obj < end_date:
             print(f"🛑 {date} は終了日 {end_date.date()} より古いため打ち切り")
             break
+
+        if date_obj > start_date:
+            print(f"⏩ {date} は開始日 {start_date.date()} より新しいためスキップ")
+            continue
 
         if progress_callback:
             progress_callback(f"📰 {date} - {title}")
@@ -63,7 +67,6 @@ def scrape_mazda_news(year, end_date, progress_callback=None):
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div.Wysiwyg.column-layout"))
             )
-
             soup_detail = BeautifulSoup(driver.page_source, "html.parser")
             driver.quit()
 
