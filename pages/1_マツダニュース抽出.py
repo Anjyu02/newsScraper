@@ -21,7 +21,7 @@ else:
 
             for year in years:
                 st.write(f"📅 {year}年を処理中...")
-                df = scrape_mazda_news(year, end_date, progress_callback=status_placeholder.write)
+                df = scrape_mazda_news(year, start_date, end_date, progress_callback=status_placeholder.write)
                 if not df.empty:
                     all_data.append(df)
 
