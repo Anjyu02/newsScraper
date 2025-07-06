@@ -76,7 +76,7 @@ def scrape_articles(year):
         articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
         print(f"📄 ページ{page_num} の記事数: {len(articles)}")
 
-        for article in articles:
+                for article in articles:
             try:
                 link = article.find_element(By.XPATH, './/a').get_attribute('href')
                 title = article.find_element(By.XPATH, './/p[@class="article-txt"]').text
@@ -93,8 +93,7 @@ def scrape_articles(year):
 
                 # ✅ 5月だけ通す
                 if date_obj.year == 2024 and date_obj.month == 5:
-                # ← 本文取得などの処理を続ける
-                    pass
+                    pass  # ← 本文取得などの処理を続ける
 
                 elif date_obj < pd.to_datetime("2024-05-01"):
                     print(f"🛑 {date} は5月より前 → ここで打ち切り")
@@ -106,35 +105,25 @@ def scrape_articles(year):
                     continue
 
                 # ✅ スキップ対象のリンク処理（リンクの中身ごとに本文を設定）
-        if "/ir/" in link:
-            print(f"📄 IRページのため本文抽出スキップ → {link}")
-            data.append({
-                "日付": date,
-                "見出し": title,
-                "本文": "IRページのため本文抽出スキップ",
-                "リンク": link
-            })
-            continue
+                if "/ir/" in link:
+                    print(f"📄 IRページのため本文抽出スキップ → {link}")
+                    data.append({
+                        "日付": date,
+                        "見出し": title,
+                        "本文": "IRページのため本文抽出スキップ",
+                        "リンク": link
+                    })
+                    continue
 
-        elif "/engineering-journal/" in link:
-            print(f"📄 Engineering Journalページのため本文抽出スキップ → {link}")
-            data.append({
-                "日付": date,
-                "見出し": title,
-                "本文": "Engineering Journalページのため本文抽出スキップ",
-                "リンク": link
-            })
-            continue
-
-        elif "irmovie.jp" in link:
-            print(f"📄 外部サイトのため本文抽出スキップ → {link}")
-            data.append({
-                "日付": date,
-                "見出し": title,
-                "本文": "外部サイトのため本文抽出スキップ",
-                "リンク": link
-            })
-            continue
+                elif "/engineering-journal/" in link:
+                    print(f"📄 Engineering Journalページのため本文抽出スキップ → {link}")
+                    data.append({
+                        "日付": date,
+                        "見出し": title,
+                        "本文": "Engineering Journalページのため本文抽出スキップ",
+                        "リンク":
+                    })
+                    continue
 
                 driver.execute_script("window.open('');")
                 driver.switch_to.window(driver.window_handles[1])
@@ -183,7 +172,7 @@ def scrape_articles(year):
 # ===============================
 # ✅ Streamlit アプリ本体
 # ===============================
-st.title("JTEKTニュース抽出（2024年5月限定）")
+st.title("JTEKTニュース抽出（2024年5月限定）2")
 
 if st.button("✅ 2024年5月のニュースを取得"):
     with st.spinner("記事を抽出中です..."):
