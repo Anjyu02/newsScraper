@@ -52,6 +52,8 @@ def scrape_articles(year):
     data = []
     page_num = 1
 
+     # ✅ Streamlit 表示用エリアを準備
+    status = st.empty()
     start_date = pd.to_datetime("2024-05-31")
     end_date = pd.to_datetime("2024-05-01")
 
@@ -84,6 +86,9 @@ def scrape_articles(year):
 
                 if pd.isna(date_obj):
                     continue
+
+                # ✅ 現在処理中の日付を Streamlit に表示
+                status.text(f"📅 現在処理中の日付: {date}")
 
                 if date_obj > start_date or date_obj < end_date:
                     print(f"⏩ {date} は5月以外 → スキップ")
