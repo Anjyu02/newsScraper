@@ -19,12 +19,8 @@ else:
 
             for year in years:
                 st.write(f"📅 {year}年を処理中...")
-                df = scrape_mazda_news(year)
-
+                df = scrape_mazda_news(year, progress_callback=st.text)  # ← ここがポイント
                 if not df.empty:
-                    # ✅ 各記事の日付とタイトルを1行で表示
-                    for _, row in df.iterrows():
-                        st.text(f"📰 {row['日付']} - {row['見出し']}")
                     all_data.append(df)
 
             if all_data:
