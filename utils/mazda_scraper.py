@@ -54,12 +54,16 @@ def scrape_mazda_news(year, progress_callback=None):
             soup_detail = BeautifulSoup(driver.page_source, "html.parser")
             driver.quit()
 
-            content_div = soup_detail.select_one("div.Wysiwyg.column-layout")
-            if not content_div:
-                body = "❌ 本文が見つかりません"
-            else:
-                # ✅ 中身をすべてテキスト化（改行付き）
-                body = content_div.get_text(separator="\n", strip=True)
+            # ✅ 本文は複数のセクションに分かれている
+            sections = soup_detail.select("div.Wysiwyg.column-layout")
+            texts = []
+            for section in sections:
+                for tag in section.find_all(["h1", "h2", "h3", "h4", "p", "li"]):
+                    text = tag.get_text(separator=" ", strip=True)
+                    if text:
+                        texts.append(text)
+
+            body = "\n".join(texts) if texts else "❌ 本文が見つかりません"
 
         except Exception as e:
             driver.quit()
