@@ -1,5 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
@@ -34,27 +37,29 @@ def scrape_mazda_news(year):
         date = date_tag.text.strip() if date_tag else ""
         title = title_tag.text.strip() if title_tag else ""
 
-        # 本文抽出（別タブで開かず、個別にSeleniumで取得）
-        driver = generate_driver()
-        driver.get(url)
-        time.sleep(1)
-        soup_detail = BeautifulSoup(driver.page_source, "html.parser")
-        driver.quit()
+        try:
+            driver = generate_driver()
+            driver.get(url)
 
-        content_div = soup_detail.select_one("div.OneColumnLayout__column")
-        if not content_div:
-            body = "❌ 本文が見つかりません"
-        else:
-            elements = content_div.select("h2, h4, p, strong, table")
-            texts = []
-            for elem in elements:
-                if elem.name == "table":
-                    texts.append(elem.get_text(strip=True, separator=" "))
-                else:
-                    text = elem.get_text(strip=True)
-                    if text:
-                        texts.append(text)
-            body = "\n".join(texts)
+            # ✅ 本文エリアが読み込まれるまで最大10秒待機
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "div.Wysiwyg.column-layout"))
+            )
+
+            soup_detail = BeautifulSoup(driver.page_source, "html.parser")
+            driver.quit()
+
+            content_div = soup_detail.select_one("div.Wysiwyg.column-layout")
+            if not content_div:
+                body = "❌ 本文が見つかりません"
+            else:
+                # ✅ 中身をすべてテキスト化（改行付き）
+                body = content_div.get_text(separator="\n", strip=True)
+
+        except Exception as e:
+            driver.quit()
+            print(f"⚠️ 本文抽出失敗: {url} → {e}")
+            body = f"⚠️ 本文抽出エラー: {e}"
 
         news_data.append({
             "日付": date,
