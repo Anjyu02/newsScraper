@@ -52,13 +52,13 @@ def scrape_articles(year):
     data = []
     page_num = 1
 
-     # ✅ Streamlit 表示用エリアを準備
+    # ✅ Streamlit 表示用エリアを準備
     status = st.empty()
-    
+
     start_date = pd.to_datetime("2024-05-31")
     end_date = pd.to_datetime("2024-05-01")
 
-   while True:
+    while True:
         url = get_page_url(year, page_num)
         print(f"🌀 アクセスURL: {url}")
         driver.get(url)
