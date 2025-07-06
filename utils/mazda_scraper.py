@@ -70,3 +70,24 @@ def scrape_mazda_news(year, end_date, progress_callback=None):
 
             sections = soup_detail.select("div.Wysiwyg.column-layout")
             texts = []
+            for section in sections:
+                for tag in section.find_all(["h1", "h2", "h3", "h4", "p", "li"]):
+                    text = tag.get_text(separator=" ", strip=True)
+                    if text:
+                        texts.append(text)
+
+            body = "\n".join(texts) if texts else "❌ 本文が見つかりません"
+
+        except Exception as e:
+            driver.quit()
+            print(f"⚠️ 本文抽出失敗: {url} → {e}")
+            body = f"⚠️ 本文抽出エラー: {e}"
+
+        news_data.append({
+            "日付": date,
+            "見出し": title,
+            "本文": body,
+            "リンク": url
+        })
+
+    return pd.DataFrame(news_data)
