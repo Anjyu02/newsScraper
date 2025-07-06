@@ -58,7 +58,7 @@ def scrape_articles(year):
     start_date = pd.to_datetime("2024-05-31")
     end_date = pd.to_datetime("2024-05-01")
 
-    while True:
+   while True:
         url = get_page_url(year, page_num)
         print(f"🌀 アクセスURL: {url}")
         driver.get(url)
@@ -76,7 +76,7 @@ def scrape_articles(year):
         articles = driver.find_elements(By.XPATH, '//li[@class="article"]')
         print(f"📄 ページ{page_num} の記事数: {len(articles)}")
 
-                for article in articles:
+        for article in articles:
             try:
                 link = article.find_element(By.XPATH, './/a').get_attribute('href')
                 title = article.find_element(By.XPATH, './/p[@class="article-txt"]').text
@@ -88,23 +88,19 @@ def scrape_articles(year):
                 if pd.isna(date_obj):
                     continue
 
-                # ✅ 現在処理中の日付を Streamlit に表示
                 status.text(f"📅 現在処理中の日付: {date}")
 
-                # ✅ 5月だけ通す
                 if date_obj.year == 2024 and date_obj.month == 5:
-                    pass  # ← 本文取得などの処理を続ける
-
+                    pass
                 elif date_obj < pd.to_datetime("2024-05-01"):
                     print(f"🛑 {date} は5月より前 → ここで打ち切り")
                     driver.quit()
                     return pd.DataFrame(data)
-
                 else:
                     print(f"⏩ {date} は5月以外（6月〜12月）→ スキップ")
                     continue
 
-                # ✅ スキップ対象のリンク処理（リンクの中身ごとに本文を設定）
+                # ✅ スキップ対象のリンク処理
                 if "/ir/" in link:
                     print(f"📄 IRページのため本文抽出スキップ → {link}")
                     data.append({
@@ -121,7 +117,17 @@ def scrape_articles(year):
                         "日付": date,
                         "見出し": title,
                         "本文": "Engineering Journalページのため本文抽出スキップ",
-                        "リンク":
+                        "リンク": link
+                    })
+                    continue
+
+                elif "irmovie.jp" in link:
+                    print(f"📄 外部サイトのため本文抽出スキップ → {link}")
+                    data.append({
+                        "日付": date,
+                        "見出し": title,
+                        "本文": "外部サイトのため本文抽出スキップ",
+                        "リンク": link
                     })
                     continue
 
