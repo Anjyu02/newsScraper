@@ -54,6 +54,7 @@ def scrape_articles(year):
 
      # ✅ Streamlit 表示用エリアを準備
     status = st.empty()
+    
     start_date = pd.to_datetime("2024-05-31")
     end_date = pd.to_datetime("2024-05-01")
 
