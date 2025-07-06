@@ -71,17 +71,19 @@ def get_yearly_date_ranges(start_date, end_date):
 def extract_content_text(content_div):
     texts = []
 
-    # 1. <p>タグ内のテキスト（改行含む）
+    # <p>タグのテキスト
     for p_tag in content_div.find_all("p"):
-        paragraph = p_tag.get_text(" ", strip=True)
+        paragraph = p_tag.get_text(" ", strip=True)  # ← <br> に対応
         if paragraph:
             texts.append(paragraph)
 
-    # 2. <table>タグの処理（行単位に "｜" 区切りで抽出）
+    # <table>タグのテキスト
     for table in content_div.find_all("table"):
         for row in table.find_all("tr"):
             cells = row.find_all(["th", "td"])
-            row_text = "｜".join(cell.get_text(strip=True) for cell in cells)
+            row_text = "｜".join(
+                cell.get_text(" ", strip=True) for cell in cells  # ← <br> に対応！
+            )
             texts.append(row_text)
 
     return "\n".join(texts)
