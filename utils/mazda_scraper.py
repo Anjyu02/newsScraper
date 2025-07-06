@@ -10,7 +10,7 @@ import time
 # ✅ end_date を追加し、進捗用の progress_callback も保持
 def scrape_mazda_news(year, end_date, progress_callback=None):
     end_date = pd.to_datetime(end_date)
-    
+
     def generate_driver():
         options = Options()
         options.add_argument("--headless")
@@ -49,12 +49,10 @@ def scrape_mazda_news(year, end_date, progress_callback=None):
             print(f"⚠️ 日付処理中に例外発生 → {e}")
             continue
 
-        #終了日を過ぎたらストップ
         if date_obj < end_date:
             print(f"🛑 {date} は終了日 {end_date.date()} より古いため打ち切り")
             break
 
-        # ✅ 進捗表示（Streamlitなどで）
         if progress_callback:
             progress_callback(f"📰 {date} - {title}")
 
@@ -71,11 +69,18 @@ def scrape_mazda_news(year, end_date, progress_callback=None):
 
             sections = soup_detail.select("div.Wysiwyg.column-layout")
             texts = []
+
             for section in sections:
-                for tag in section.find_all(["h1", "h2", "h3", "h4", "p", "li"]):
-                    text = tag.get_text(separator=" ", strip=True)
-                    if text:
-                        texts.append(text)
+                for tag in section.find_all(["h1", "h2", "h3", "h4", "p", "li", "strong", "table"]):
+                    if tag.name == "table":
+                        for row in tag.find_all("tr"):
+                            cells = row.find_all(["th", "td"])
+                            row_text = "｜".join(cell.get_text(strip=True) for cell in cells)
+                            texts.append(row_text)
+                    else:
+                        text = tag.get_text(separator=" ", strip=True)
+                        if text:
+                            texts.append(text)
 
             body = "\n".join(texts) if texts else "❌ 本文が見つかりません"
 
