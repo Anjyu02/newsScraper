@@ -31,6 +31,9 @@ def scrape_mazda_news(year):
         if not link_tag:
             continue
 
+        if progress_callback:
+        progress_callback(f"📰 {date} - {title}")
+
         url = "https://www.mazda.co.jp" + link_tag["href"]
         date_tag = link_tag.select_one("p.Notification__list__date")
         title_tag = link_tag.select_one("p.Notification__list__text-pc")
