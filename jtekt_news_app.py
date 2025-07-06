@@ -65,6 +65,30 @@ def get_yearly_date_ranges(start_date, end_date):
 
     return dict(sorted(year_ranges.items(), reverse=True))
 
+# ===============================
+# ✅ 本文抽出ヘルパー関数
+# ===============================
+def extract_content_text(content_div):
+    texts = []
+
+    # 1. <p>タグ内のテキスト（改行含む）
+    for p_tag in content_div.find_all("p"):
+        paragraph = p_tag.get_text(" ", strip=True)
+        if paragraph:
+            texts.append(paragraph)
+
+    # 2. <table>タグの処理（行単位に "｜" 区切りで抽出）
+    for table in content_div.find_all("table"):
+        for row in table.find_all("tr"):
+            cells = row.find_all(["th", "td"])
+            row_text = "｜".join(cell.get_text(strip=True) for cell in cells)
+            texts.append(row_text)
+
+    return "\n".join(texts)
+
+# ===============================
+# ✅ 本体スクレイピング関数
+# ===============================
 def scrape_articles(year, start_date, end_date):
     print(f"🚀 scrape_articles 開始: {year}年（{start_date.date()}〜{end_date.date()}）")
     driver = generate_driver()
@@ -144,10 +168,9 @@ def scrape_articles(year, start_date, end_date):
                 soup = BeautifulSoup(driver.page_source, "html.parser")
                 content_div = soup.select_one("div.detail-content")
 
+                # ✅ テーブル含む抽出処理
                 if content_div:
-                    body_text = "\n".join(
-                        tag.get_text(strip=True) for tag in content_div.find_all(["h2", "p"])
-                    )
+                    body_text = extract_content_text(content_div)
                 else:
                     body_text = "本文抽出不可"
 
