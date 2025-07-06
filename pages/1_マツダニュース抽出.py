@@ -17,9 +17,11 @@ else:
             years = list(range(end_date.year, start_date.year + 1))
             all_data = []
 
+            status_placeholder = st.empty()  # ← 1行だけの進捗表示
+
             for year in years:
                 st.write(f"📅 {year}年を処理中...")
-                df = scrape_mazda_news(year, progress_callback=st.text)  # ← ここがポイント
+                df = scrape_mazda_news(year, progress_callback=status_placeholder.text)
                 if not df.empty:
                     all_data.append(df)
 
