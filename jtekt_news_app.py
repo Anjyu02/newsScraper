@@ -105,10 +105,36 @@ def scrape_articles(year):
                     print(f"⏩ {date} は5月以外（6月〜12月）→ スキップ")
                     continue
 
-                if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
-                    print(f"📄 スキップ対象リンク: {link}")
-                    data.append({"日付": date, "見出し": title, "本文": "スキップ対象", "リンク": link})
-                    continue
+                # ✅ スキップ対象のリンク処理（リンクの中身ごとに本文を設定）
+        if "/ir/" in link:
+            print(f"📄 IRページのため本文抽出スキップ → {link}")
+            data.append({
+                "日付": date,
+                "見出し": title,
+                "本文": "IRページのため本文抽出スキップ",
+                "リンク": link
+            })
+            continue
+
+        elif "/engineering-journal/" in link:
+            print(f"📄 Engineering Journalページのため本文抽出スキップ → {link}")
+            data.append({
+                "日付": date,
+                "見出し": title,
+                "本文": "Engineering Journalページのため本文抽出スキップ",
+                "リンク": link
+            })
+            continue
+
+        elif "irmovie.jp" in link:
+            print(f"📄 外部サイトのため本文抽出スキップ → {link}")
+            data.append({
+                "日付": date,
+                "見出し": title,
+                "本文": "外部サイトのため本文抽出スキップ",
+                "リンク": link
+            })
+            continue
 
                 driver.execute_script("window.open('');")
                 driver.switch_to.window(driver.window_handles[1])
