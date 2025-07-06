@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import time
 
-# ✅ progress_callback を引数に追加
-def scrape_mazda_news(year, progress_callback=None):
+# ✅ end_date を追加し、進捗用の progress_callback も保持
+def scrape_mazda_news(year, end_date, progress_callback=None):
     def generate_driver():
         options = Options()
         options.add_argument("--headless")
@@ -38,7 +38,22 @@ def scrape_mazda_news(year, progress_callback=None):
         date = date_tag.text.strip() if date_tag else ""
         title = title_tag.text.strip() if title_tag else ""
 
-        # ✅ 進捗表示（Streamlitの st.text などを渡す）
+        # ✅ 日付を datetime に変換（変換失敗時はスキップ）
+        try:
+            date_obj = pd.to_datetime(date, format="%Y.%m.%d", errors="coerce")
+            if pd.isna(date_obj):
+                print(f"⏭️ 日付変換失敗のためスキップ → '{date}' / 見出し: {title}")
+                continue
+        except Exception as e:
+            print(f"⚠️ 日付処理中に例外発生 → {e}")
+            continue
+
+        # ✅ ここで終了日より古ければ打ち切り
+        if date_obj < end_date:
+            print(f"🛑 {date} は終了日 {end_date.date()} より古いため打ち切り")
+            break
+
+        # ✅ 進捗表示（Streamlitなどで）
         if progress_callback:
             progress_callback(f"📰 {date} - {title}")
 
@@ -46,7 +61,6 @@ def scrape_mazda_news(year, progress_callback=None):
             driver = generate_driver()
             driver.get(url)
 
-            # ✅ 本文エリアが読み込まれるまで最大10秒待機
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "div.Wysiwyg.column-layout"))
             )
@@ -54,27 +68,5 @@ def scrape_mazda_news(year, progress_callback=None):
             soup_detail = BeautifulSoup(driver.page_source, "html.parser")
             driver.quit()
 
-            # ✅ 本文は複数のセクションに分かれている
             sections = soup_detail.select("div.Wysiwyg.column-layout")
             texts = []
-            for section in sections:
-                for tag in section.find_all(["h1", "h2", "h3", "h4", "p", "li"]):
-                    text = tag.get_text(separator=" ", strip=True)
-                    if text:
-                        texts.append(text)
-
-            body = "\n".join(texts) if texts else "❌ 本文が見つかりません"
-
-        except Exception as e:
-            driver.quit()
-            print(f"⚠️ 本文抽出失敗: {url} → {e}")
-            body = f"⚠️ 本文抽出エラー: {e}"
-
-        news_data.append({
-            "日付": date,
-            "見出し": title,
-            "本文": body,
-            "リンク": url
-        })
-
-    return pd.DataFrame(news_data)
