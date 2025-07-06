@@ -60,7 +60,7 @@ def scrape_articles(year, start_date, end_date):
 
         try:
             hide_cookie_popup(driver)
-            WebDriverWait(driver, 5).until(
+            WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, '//li[@class="article"]'))
             )
             time.sleep(1)
@@ -139,7 +139,7 @@ def scrape_articles(year, start_date, end_date):
                 except:
                     pass
                 continue
-
+EC.presence
         page_num += 1
 
     # ✅ while文を抜けた後、関数本体の末尾で揃える
