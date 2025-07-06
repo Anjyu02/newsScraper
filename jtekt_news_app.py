@@ -91,8 +91,18 @@ def scrape_articles(year):
                 # ✅ 現在処理中の日付を Streamlit に表示
                 status.text(f"📅 現在処理中の日付: {date}")
 
-                if date_obj > start_date or date_obj < end_date:
-                    print(f"⏩ {date} は5月以外 → スキップ")
+                # ✅ 5月だけ通す
+                if date_obj.year == 2024 and date_obj.month == 5:
+                # ← 本文取得などの処理を続ける
+                    pass
+
+                elif date_obj < pd.to_datetime("2024-05-01"):
+                    print(f"🛑 {date} は5月より前 → ここで打ち切り")
+                    driver.quit()
+                    return pd.DataFrame(data)
+
+                else:
+                    print(f"⏩ {date} は5月以外（6月〜12月）→ スキップ")
                     continue
 
                 if any(skip in link for skip in ["/ir/", "/engineering-journal/", "irmovie.jp"]):
