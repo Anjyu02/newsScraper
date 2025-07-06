@@ -8,8 +8,6 @@ st.title("🚗 マツダニュース抽出アプリ")
 start_date = st.date_input("開始日（新しい日）", datetime.today())
 end_date = st.date_input("終了日（古い日）", datetime.today())
 
-st.caption("※ マツダ公式ニュースは年別に分かれており、ページネーションは存在しません。")
-
 if start_date < end_date:
     st.error("⚠️ 終了日は開始日より過去の日付を選んでください。")
 else:
@@ -21,16 +19,19 @@ else:
 
             for year in years:
                 st.write(f"📅 {year}年を処理中...")
-                data = scrape_mazda_news(year)  # ✅ 正しい関数名に修正
-                df = pd.DataFrame(data)
+                df = scrape_mazda_news(year)
+
                 if not df.empty:
+                    # ✅ 各記事の日付とタイトルを1行で表示
+                    for _, row in df.iterrows():
+                        st.text(f"📰 {row['日付']} - {row['見出し']}")
                     all_data.append(df)
 
             if all_data:
                 df_all = pd.concat(all_data, ignore_index=True)
                 df_all["日付_dt"] = pd.to_datetime(df_all["日付"], errors="coerce")
 
-                # ✅ ここで期間フィルター
+                # ✅ 期間フィルター
                 df_filtered = df_all[
                     (df_all["日付_dt"] >= pd.to_datetime(end_date)) &
                     (df_all["日付_dt"] <= pd.to_datetime(start_date))
