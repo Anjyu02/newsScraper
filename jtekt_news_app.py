@@ -11,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.core.os_manager import ChromeType
+from datetime import datetime
 
 def generate_driver():
     options = Options()
@@ -45,18 +46,14 @@ def hide_cookie_popup(driver):
     except Exception as e:
         print(f"⚠️ 非表示処理に失敗しました: {e}")
 
-# ✅ 固定期間：2024年5月のみ
-def scrape_articles(year):
-    print("🚀 scrape_articles 開始")
+def scrape_articles(year, start_date, end_date):
+    print(f"🚀 scrape_articles 開始: {year}年（{start_date.date()}〜{end_date.date()}）")
     driver = generate_driver()
     data = []
     page_num = 1
 
-    # ✅ Streamlit 表示用エリアを準備
+    # ✅ Streamlit 表示用エリア
     status = st.empty()
-
-    start_date = pd.to_datetime("2024-05-31")
-    end_date = pd.to_datetime("2024-05-01")
 
     while True:
         url = get_page_url(year, page_num)
@@ -81,56 +78,43 @@ def scrape_articles(year):
                 link = article.find_element(By.XPATH, './/a').get_attribute('href')
                 title = article.find_element(By.XPATH, './/p[@class="article-txt"]').text
                 date = article.find_element(By.XPATH, './/time').text
-
                 date_obj = pd.to_datetime(date, format="%Y.%m.%d", errors="coerce")
-                print(f"🗓️ 抽出候補: {date} → {date_obj}")
 
+                print(f"🗓️ 抽出候補: {date} → {date_obj}")
                 if pd.isna(date_obj):
                     continue
 
                 status.text(f"📅 現在処理中の日付: {date}")
 
-                if date_obj.year == 2024 and date_obj.month == 5:
-                    pass
-                elif date_obj < pd.to_datetime("2024-05-01"):
-                    print(f"🛑 {date} は5月より前 → ここで打ち切り")
+                # ✅ 期間判定（新しい順に並ぶ構造前提）
+                if date_obj < end_date:
+                    print(f"🛑 {date} は範囲より古いため打ち切り")
                     driver.quit()
                     return pd.DataFrame(data)
-                else:
-                    print(f"⏩ {date} は5月以外（6月〜12月）→ スキップ")
+                elif date_obj > start_date:
+                    print(f"⏩ {date} は範囲より新しいためスキップ")
                     continue
 
-                # ✅ スキップ対象のリンク処理
+                # ✅ スキップ対象リンク処理
+                skip_reason = None
                 if "/ir/" in link:
-                    print(f"📄 IRページのため本文抽出スキップ → {link}")
-                    data.append({
-                        "日付": date,
-                        "見出し": title,
-                        "本文": "IRページのため本文抽出スキップ",
-                        "リンク": link
-                    })
-                    continue
-
+                    skip_reason = "IRページのため本文抽出スキップ"
                 elif "/engineering-journal/" in link:
-                    print(f"📄 Engineering Journalページのため本文抽出スキップ → {link}")
-                    data.append({
-                        "日付": date,
-                        "見出し": title,
-                        "本文": "Engineering Journalページのため本文抽出スキップ",
-                        "リンク": link
-                    })
-                    continue
-
+                    skip_reason = "Engineering Journalページのため本文抽出スキップ"
                 elif "irmovie.jp" in link:
-                    print(f"📄 外部サイトのため本文抽出スキップ → {link}")
+                    skip_reason = "外部サイトのため本文抽出スキップ"
+
+                if skip_reason:
+                    print(f"📄 {skip_reason} → {link}")
                     data.append({
                         "日付": date,
                         "見出し": title,
-                        "本文": "外部サイトのため本文抽出スキップ",
+                        "本文": skip_reason,
                         "リンク": link
                     })
                     continue
 
+                # ✅ 本文抽出
                 driver.execute_script("window.open('');")
                 driver.switch_to.window(driver.window_handles[1])
                 driver.get(link)
@@ -174,23 +158,50 @@ def scrape_articles(year):
 
     driver.quit()
     return pd.DataFrame(data)
-
+    
 # ===============================
-# ✅ Streamlit アプリ本体
+# ✅ Streamlit アプリ本体（任意期間対応）
 # ===============================
-st.title("JTEKTニュース抽出（2024年5月限定）2")
 
-if st.button("✅ 2024年5月のニュースを取得"):
-    with st.spinner("記事を抽出中です..."):
-        df = scrape_articles(2024)
-        if df.empty:
-            st.warning("記事が見つかりませんでした。")
-        else:
-            st.success(f"{len(df)}件の記事を抽出しました！")
-            st.dataframe(df)
-            st.download_button(
-                label="📄 CSVダウンロード",
-                data=df.to_csv(index=False),
-                file_name="jtekt_news_2024_05.csv",
-                mime="text/csv"
+st.title("JTEKTニュース抽出（任意期間）")
+
+# ✅ ユーザーが指定する期間（開始日と終了日）
+start_date = st.date_input("開始日（新しい日付）", datetime.today())
+end_date = st.date_input("終了日（古い日付）", datetime.today())
+
+if start_date > end_date:
+    if st.button("✅ ニュースを抽出する"):
+        with st.spinner("記事を抽出中です..."):
+
+            # 1. 年ごとの処理範囲を取得
+            year_ranges = get_yearly_date_ranges(
+                pd.to_datetime(start_date), pd.to_datetime(end_date)
             )
+
+            all_data = []
+
+            # 2. 各年ごとに記事を取得
+            for year, (y_start, y_end) in year_ranges.items():
+                st.write(f"📅 {year}年: {y_start.date()} 〜 {y_end.date()} を処理中...")
+                df_year = scrape_articles(year, y_start, y_end)
+                all_data.append(df_year)
+
+            # 3. データ統合と表示
+            if all_data:
+                df_all = pd.concat(all_data, ignore_index=True)
+                df_all["日付_dt"] = pd.to_datetime(df_all["日付"], format="%Y.%m.%d", errors="coerce")
+                df_all = df_all.sort_values("日付_dt", ascending=False).drop(columns=["日付_dt"])
+
+                st.success(f"✅ {len(df_all)}件の記事を抽出しました！")
+                st.dataframe(df_all)
+
+                st.download_button(
+                    label="📄 CSVダウンロード",
+                    data=df_all.to_csv(index=False),
+                    file_name="jtekt_news_selected_period.csv",
+                    mime="text/csv"
+                )
+            else:
+                st.warning("⚠️ 記事が見つかりませんでした。")
+else:
+    st.error("⚠️ 終了日は開始日より過去の日付を選んでください。")
