@@ -38,20 +38,19 @@ def scrape_mazda_news(year, end_date, progress_callback=None):
         date = date_tag.text.strip() if date_tag else ""
         title = title_tag.text.strip() if title_tag else ""
 
-        # # ✅ 日付を datetime に変換（変換失敗時はスキップ）
-        # try:
-        #     date_obj = pd.to_datetime(date, format="%Y.%m.%d", errors="coerce")
-        #     if pd.isna(date_obj):
-        #         print(f"⏭️ 日付変換失敗のためスキップ → '{date}' / 見出し: {title}")
-        #         continue
-        # except Exception as e:
-        #     print(f"⚠️ 日付処理中に例外発生 → {e}")
-        #     continue
+        try:
+            date_obj = pd.to_datetime(date, format="%Y.%m.%d", errors="coerce")
+            if pd.isna(date_obj):
+                print(f"⏭️ 日付変換失敗のためスキップ → '{date}' / 見出し: {title}")
+                continue
+        except Exception as e:
+            print(f"⚠️ 日付処理中に例外発生 → {e}")
+            continue
 
-        # # ✅ ここで終了日より古ければ打ち切り
-        # if date_obj < end_date:
-        #     print(f"🛑 {date} は終了日 {end_date.date()} より古いため打ち切り")
-        #     break
+        # ✅ 比較して終了日より古ければ打ち切り
+        if date_obj < end_date:
+            print(f"🛑 {date} は終了日 {end_date.date()} より古いため打ち切り")
+            break
 
         # ✅ 進捗表示（Streamlitなどで）
         if progress_callback:
